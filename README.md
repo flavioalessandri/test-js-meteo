@@ -1,1 +1,1 @@
-test-js-meteo
+test-meteo
