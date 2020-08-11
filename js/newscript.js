@@ -1,66 +1,69 @@
-// SCRIPT QUASI COMPLETO - MANCA PARTE DELLO SPINNER
 
-// nuova funzione ------------------------------------------------------
+// my Function ------------------------------------------------------
+const currentTime = () => {
+  const now = moment()['_d'];
+  const hours = now.getHours();
+  const minutes = now.getMinutes();
+  const seconds = now.getSeconds();
+
+  var clock = hours +" : " + minutes +" : " + seconds;
+  return clock;
+}
+
+// my Function ------------------------------------------------------
 const showSpinner = () => {
   document.querySelector('#spinner').classList.add('show');
-  return true;
 }
 
-// nuova funzione ------------------------------------------------------
+// my Function ------------------------------------------------------
 const hideSpinner = () => {
-
-  // setTimeout(()=>{
-
-    document.querySelector('#spinner').classList.remove('show');
-    document.querySelector('#spinner').classList.add('hide');
-
-  // },2000)
+  document.querySelector('#spinner').classList.remove('show');
+  document.querySelector('#spinner').classList.add('hide');
 }
 
-// nuova funzione ------------------------------------------------------
+// my Function ------------------------------------------------------
 const getMyIp = () => {
    return axios.get('https://api.ipify.org')
     .then(result => {
-      console.log("-const getMyIp- result:", result.data);
+      console.log("-const getMyIp- result: ", result.data);
       return result.data;
   })
     .catch(error => {
-       console.log("getMyIp L'errore è:",error);
+       console.log("-const getMyIp- ERROR:",error);
        throw error;
    })
 }
 
-// nuova funzione ------------------------------------------------------
+// my Function ------------------------------------------------------
 const getNameLocation = (ip) => {
   return axios.get('http://ipwhois.app/json/'+ ip)
     .then((result) => {
-    console.log("-const getNameLocation- result :",result.data.city);
+    console.log("-const getNameLocation- result: ",result.data.city);
     return result.data.city;
   })
     .catch(error => {
-     console.log("getNameLocation L'errore è:",error);
+     console.log("-const getNameLocation- ERROR:",error);
      throw error;
   })
 }
 
-// nuova funzione ------------------------------------------------------
+// my Function ------------------------------------------------------
 const getWeatherForecast = (cityName) => {
   return axios.get('http://api.weatherapi.com/v1/forecast.json?key=59723a46f32442b5886110030200308&q='+cityName+'&days=3')
     .then((result) => {
-    console.log("-const getWeatherForecast - result : ", result.data);
+    console.log("-const getWeatherForecast- result : ", result.data);
     return result.data;
   })
     .catch(error => {
-     console.log("getWeatherForecast  L'errore è:",error);
+     console.log("-const getWeatherForecast- ERROR:",error);
      throw error;
   })
 }
 
-// nuova funzione ------------------------------------------------------
+// my Function ------------------------------------------------------
 const setWeatherData = (data) => {
 
   const forecast_day = data.forecast.forecastday;
-  const location = data.location.name;
 
   // Handlebars section
   const template = document.getElementById("template").innerHTML;
@@ -70,12 +73,12 @@ const setWeatherData = (data) => {
   const loc_template = document.getElementById("loc_template").innerHTML;
   const loc_compiled = Handlebars.compile(loc_template);
   const loc_target = "location";
+  data.currentdate = currentTime();
   const locationHTML = loc_compiled(data);
-  console.log("loc_data", data);
+
   document.getElementById(loc_target).innerHTML = locationHTML;
 
  for (let i = 0; i < 3; i++) {
-
    const datas = forecast_day[i];
    datas.dayname = moment(datas.date).format('dddd');
    datas.date = moment(datas.date, "YYYY-MM-DD").format('DD-MMMM-YYYY');
@@ -88,61 +91,94 @@ const setWeatherData = (data) => {
 
    document.getElementById(target).innerHTML += elementHTML;
  }
- return true;
 }
 
-// nuova funzione ------------------------------------------------------
+// my Function ------------------------------------------------------
 const getWeatherForecastByIp = () => {
   return getMyIp()
-    .then(ip => getNameLocation(ip))
-      .then(cityName => getWeatherForecast(cityName))
-
+    .then(ip => getNameLocation(ip))  //can also write .then(getNameLocation)
+      .then(cityName => getWeatherForecast(cityName)) //can also write .then(getWeatherForecast)
   }
 
-// nuova funzione ------------------------------------------------------
+  // my Function ------------------------------------------------------
 const getWeatherForecastByInput = (input) => {
   return getWeatherForecast(input)
+}
 
-  }
-
-
-// nuova funzione ------------------------------------------------------
-const cleanDom = () =>{
+// my Function ------------------------------------------------------
+const cleanDOMcontainer = () =>{
   document.getElementById('container').innerHTML = "";
 }
 
-// nuova funzione ------------------------------------------------------
+// my Function ------------------------------------------------------
 const cleanInputValue = () =>{
   document.getElementById("input").value = "";
 }
 
-// MAIN FUNCTIONS  ------------------------------------------------------
+// my Function ------------------------------------------------------
+const setIntervalforIP = () => {
+  console.log("Enter in -setIntervalforIP- ");
+  let counter = 0;
 
+  var my_interval = setInterval(() => {
+    console.log("Every 20seconds Call api; num" , counter++);
+    cleanDOMcontainer();
+     getWeatherForecastByIp()
+      .then(setWeatherData);
+  },20000);
+
+  btn.addEventListener("click", () => {
+    console.log("Break Reload Page--------------------");
+    return clearInterval(my_interval);
+  });
+}
+
+// my Function ------------------------------------------------------
+const setIntervalforInput = (arg) => {
+  console.log("Enter in -setIntervalforInput- ");
+  let counter = 0;
+
+  var my_interval = setInterval(() => {
+    console.log("Every 20seconds Call api; num" , counter++);
+    cleanDOMcontainer();
+      getWeatherForecastByInput(arg)
+        .then(setWeatherData);
+          cleanInputValue();
+  },20000);
+
+  btn.addEventListener("click", () => {
+    console.log("Break Reload Page--------------------");
+    return clearInterval(my_interval);
+  });
+}
+
+// LOAD -------INVOKE init()-----------------------------------------------
 document.addEventListener("load", init());
 
-// MAIN FUNCTIONS  ------------------------------------------------------function init(){
-
+// MAIN FUNCTION ---------------------------------------------------
 function init(){
-  console.log("HELLO");
 
-  showSpinner();
-
-  getWeatherForecastByIp()
-    .then(setWeatherData)
-    .catch(console.log)
-    .finally(hideSpinner);
-
-  const input = document.getElementById('input');
   const btn = document.getElementById('btn');
 
+  showSpinner();
+  getWeatherForecastByIp()
+    .then(setWeatherData) // can also write .then(data => setWeatherData(data))
+    .catch(console.log)
+    .then(hideSpinner)
+    .catch(console.log)
+    .finally(setIntervalforIP);
+
   btn.addEventListener("click",function (){
+    console.log("Click Button------------------------");
+    const input = document.getElementById('input');
 
-    console.log("------------------Click Function------------------------");
+    cleanDOMcontainer();
 
-    cleanDom();
-    getWeatherForecastByInput(document.getElementById("input").value)
-      .then(setWeatherData);
+     getWeatherForecastByInput(input.value)
+      .then(setWeatherData)
+      .catch(console.log)
+      .finally(setIntervalforInput(input.value));
+
     cleanInputValue();
   });
-
 }

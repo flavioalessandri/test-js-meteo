@@ -21,7 +21,7 @@
     <!-- Handlebars Template -->
 
     <script id="loc_template" type="text/x-handlebars-template">
-      <h2 class="luogo">{{location.name}} -- {{location.region}} -- {{location.country}}</h2>
+      <h2 class="luogo">{{location.name}} -- {{location.region}} -- {{location.country}} -- {{currentdate}}</h2>
     </script>
 
     <script id="template" type="text/x-handlebars-template">
@@ -48,8 +48,9 @@
         </div>
 
       </header>
-      <div id="spinner"></div>
+
       <main class="centered">
+        <div id="spinner"></div>
         <div id="log"></div>
         <div id="location"></div>
         <div id="container" class="forecast_overflow_container">
