@@ -8,8 +8,13 @@ const showSpinner = () => {
 
 // nuova funzione ------------------------------------------------------
 const hideSpinner = () => {
-  document.querySelector('#spinner').classList.remove('show');
-  document.querySelector('#spinner').classList.add('hide');
+
+  // setTimeout(()=>{
+
+    document.querySelector('#spinner').classList.remove('show');
+    document.querySelector('#spinner').classList.add('hide');
+
+  // },2000)
 }
 
 // nuova funzione ------------------------------------------------------
@@ -88,31 +93,18 @@ const setWeatherData = (data) => {
 
 // nuova funzione ------------------------------------------------------
 const getWeatherForecastByIp = () => {
-  return new Promise((resolve,reject) => {
-    getMyIp()
+  return getMyIp()
     .then(ip => getNameLocation(ip))
       .then(cityName => getWeatherForecast(cityName))
-        .then(data => setWeatherData(data));
-      })
+
   }
 
 // nuova funzione ------------------------------------------------------
 const getWeatherForecastByInput = (input) => {
-  getWeatherForecast(input)
-    .then(data => setWeatherData(data))
+  return getWeatherForecast(input)
+
   }
 
-// nuova funzione -NON UTILIZZATA-----------------------------------------------------
-  async function asyncWeatherForecastByIp() {
-     try {
-       showSpinner();
-       await getWeatherForecastByIp();
-     } catch (err) {
-       console.error(err);
-     } finally {
-       hideSpinner()
-     }
-}
 
 // nuova funzione ------------------------------------------------------
 const cleanDom = () =>{
@@ -134,8 +126,11 @@ function init(){
   console.log("HELLO");
 
   showSpinner();
-  getWeatherForecastByIp();
-  hideSpinner();
+
+  getWeatherForecastByIp()
+    .then(setWeatherData)
+    .catch(console.log)
+    .finally(hideSpinner);
 
   const input = document.getElementById('input');
   const btn = document.getElementById('btn');
@@ -145,7 +140,8 @@ function init(){
     console.log("------------------Click Function------------------------");
 
     cleanDom();
-    getWeatherForecastByInput(document.getElementById("input").value);
+    getWeatherForecastByInput(document.getElementById("input").value)
+      .then(setWeatherData);
     cleanInputValue();
   });
 
