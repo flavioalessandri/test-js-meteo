@@ -1,153 +1,212 @@
 
-// Main Function DOMContentLoaded ----------------------------------
-document.addEventListener("DOMContentLoaded", function(event) {
+// my Function ------------------------------------------------------
+const currentTime = () => {
+  const now = moment()['_d'];
+  const hours = now.getHours();
+  const minutes = now.getMinutes();
+  const seconds = now.getSeconds();
 
-  var btn = document.getElementById("btn");
+  var clock = hours +" : " + minutes +" : " + seconds;
+  return clock;
+}
 
-  getMyIpAddress();//function to get User-Ip/then get GeoLocation from IP/ finally get User Location weather forecast (using IP address) after web-page is loaded
+// my Function ------------------------------------------------------
+const showSpinner = () => {
+  document.querySelector('#spinner').classList.add('show');
+}
 
-  btn.addEventListener("click", getInputValue);
-});
+// my Function ------------------------------------------------------
+const hideSpinner = () => {
+  document.querySelector('#spinner').classList.remove('show');
+  document.querySelector('#spinner').classList.add('hide');
+}
 
-// New Function ----------------------------------
-function getInputValue(){
+// my Function ------------------------------------------------------
+const getMyIp = () => {
+   return axios.get('https://api.ipify.org')
+    .then(result => {
+      console.log("-const getMyIp- result: ", result.data);
+      return result.data;
+  })
+    .catch(error => {
+       console.log("-const getMyIp- ERROR:",error);
+       throw error;
+   })
+}
 
+// my Function ------------------------------------------------------
+const getNameLocation = (ip) => {
+  return axios.get('http://ipwhois.app/json/'+ ip)
+    .then((result) => {
+    console.log("-const getNameLocation- result: ",result.data.city);
+    return result.data.city;
+  })
+    .catch(error => {
+     console.log("-const getNameLocation- ERROR:",error);
+     throw error;
+  })
+}
+
+// my Function ------------------------------------------------------
+const getWeatherForecast = (cityName) => {
+  return axios.get('http://api.weatherapi.com/v1/forecast.json?key=59723a46f32442b5886110030200308&q='+cityName+'&days=3')
+    .then((result) => {
+    console.log("-const getWeatherForecast- result : ", result.data);
+    return result.data;
+  })
+    .catch(error => {
+     console.log("-const getWeatherForecast- ERROR:",error);
+     throw error;
+  })
+}
+
+// my Function ------------------------------------------------------
+const setWeatherData = (data) => {
+
+  const forecast_day = data.forecast.forecastday;
+
+  // Handlebars section
+  const template = document.getElementById("template").innerHTML;
+  const compiled = Handlebars.compile(template);
+  const target = "container";
+
+  const loc_template = document.getElementById("loc_template").innerHTML;
+  const loc_compiled = Handlebars.compile(loc_template);
+  const loc_target = "location";
+  data.currentdate = currentTime();
+  const locationHTML = loc_compiled(data);
+
+  document.getElementById(loc_target).innerHTML = locationHTML;
+
+ for (let i = 0; i < 3; i++) {
+   const datas = forecast_day[i];
+   datas.dayname = moment(datas.date).format('dddd');
+   datas.date = moment(datas.date, "YYYY-MM-DD").format('DD-MMMM-YYYY');
+   var elementHTML = compiled(datas);
+
+ // var compiled = Handlebars.compile(template);
+   console.log("elementHTML--------------------",elementHTML);
+   console.log("locationHTML--------------------",locationHTML);
+   console.log("datas----------------------------",datas );
+
+   document.getElementById(target).innerHTML += elementHTML;
+ }
+}
+
+// my Function ------------------------------------------------------
+const getWeatherForecastByIp = () => {
+  return getMyIp()
+    .then(ip => getNameLocation(ip))  //can also write .then(getNameLocation)
+      .then(cityName => getWeatherForecast(cityName)) //can also write .then(getWeatherForecast)
+  }
+
+  // my Function ------------------------------------------------------
+const getWeatherForecastByInput = (input) => {
+  return getWeatherForecast(input)
+}
+
+// my Function ------------------------------------------------------
+const cleanDOMcontainer = () =>{
   document.getElementById('container').innerHTML = "";
-
-  var input_val = document.getElementById("input").value;
-
-  document.getElementById("input").value = ""; //clear input value
-
-  getWeatherForecast(input_val);//function to show weather forecast of the selected city (INPUT CITY NAME)
-
-  setReloadInterval(input_val);
 }
 
-// New Function ----------------------------------
-function getMyIpAddress(){
-  var xmlhttp = new XMLHttpRequest(),
-      method = "GET",
-      url = 'https://api.ipify.org';
-
-  xmlhttp.open(method, url, true);
-  xmlhttp.onreadystatechange = function () {
-    if(xmlhttp.readyState === XMLHttpRequest.DONE && xmlhttp.status === 200) {
-
-      var my_ip = xmlhttp.responseText;
-      console.log("my_ip: ", my_ip);
-
-      getGeoLocation(my_ip); // get User GeoLocation from IP
-    }
-  };
-  xmlhttp.send();
+// my Function ------------------------------------------------------
+const cleanInputValue = () =>{
+  document.getElementById("input").value = "";
 }
 
-// New Function ----------------------------------
-function getGeoLocation(my_ip){
-  var xmlhttp = new XMLHttpRequest(),
-      method = "GET",
-      url = 'http://ipwhois.app/json/'+ my_ip;
+// my Function ------------------------------------------------------
+const setIntervalforIP = () => {
+  console.log("Enter in -setIntervalforIP- ");
+  let counter = 0;
 
-  xmlhttp.open(method, url, true);
-  xmlhttp.onreadystatechange = function () {
-    if(xmlhttp.readyState === XMLHttpRequest.DONE && xmlhttp.status === 200) {
+  var my_interval = setInterval(() => {
+    console.log("Every 20seconds Call api; num" , counter++);
+    cleanDOMcontainer();
+     getWeatherForecastByIp()
+      .then(setWeatherData)
+      .catch(console.log)
+      .finally(highlightCurrentDay);
+  },200000);
 
-      var data = JSON.parse(xmlhttp.responseText);
-      console.log(data);
-
-      var city_name = data.city;
-
-      var count= 1;
-      var btn = document.getElementById('btn');
-
-      getWeatherForecast(city_name); // show User Location weather forecast (using IP address) and GeoLocation
-
-      setReloadInterval(city_name);
-    }
-    else if (xmlhttp.status == 400) {
-      alert('There was an error 400');
-    }
-  };
-  xmlhttp.send();
-}
-
-// New Function ----------------------------------
-function setReloadInterval(elem){
-  var count= 1;
-  var btn = document.getElementById('btn');
-
-  var my_interval = setInterval(function(){
-      getWeatherForecast(elem); // show User Location weather forecast (using IP address) and GeoLocation
-      console.log("------------------------Reloaded Page Every ten seconds; Loop: ",count++);
-  },20000);
-
-  btn.addEventListener("click", function(){
-    clearInterval(my_interval);
-    console.log("------------Break Reload Page--------------------");
+  btn.addEventListener("click", () => {
+    console.log("Break Reload Page--------------------");
+    return clearInterval(my_interval);
   });
 }
 
-// New Function ----------------------------------
-function getWeatherForecast(input_val) {
-    console.log("-----------function getWeatherForecast");
-    var xmlhttp = new XMLHttpRequest();
-    xmlhttp.onreadystatechange = function() {
+// my Function ------------------------------------------------------
+const setIntervalforInput = (arg) => {
+  console.log("Enter in -setIntervalforInput- ");
+  let counter = 0;
 
-        if (xmlhttp.readyState == XMLHttpRequest.DONE) {   // XMLHttpRequest.DONE == 4
-          console.log("XMLHttpRequest.DONE", XMLHttpRequest.DONE);
+  var my_interval = setInterval(() => {
+    console.log("Every 20seconds Call api; num" , counter++);
+    cleanDOMcontainer();
+      getWeatherForecastByInput(arg)
+        .then(setWeatherData)
+        .catch(console.log)
+        .finally(highlightCurrentDay);
 
-           if (xmlhttp.status == 200) {
+          cleanInputValue();
+  },200000);
 
-              var data = JSON.parse(xmlhttp.responseText);
+  btn.addEventListener("click", () => {
+    console.log("Break Reload Page--------------------");
+    return clearInterval(my_interval);
+  });
+}
 
-              console.log("data json parse", data);
+const highlightCurrentDay = () => {
+  let target = document.getElementById('container');
+  let active = target.querySelector('div:first-child');
+  active.classList.add('active');
 
-              var forecast_day = data.forecast.forecastday;
-              var location = data.location.name;
+  let newtarget = active.children[1];
+  // newtarget.firstElementChild.classList.add('currentDay');
+  let tempData = newtarget.querySelectorAll("div[class$='_d']");
+  let newArray = Array.from(tempData);
+  for (let i = 0; i < newArray.length; i++) {
+    newArray[i].classList.add("current");
+  }
 
-              // Handlebars section
-              var template = document.getElementById("template").innerHTML;
-              console.log("--Handlebars template--", template);
+  console.log("newtarget",newtarget);
+  console.log("tempData",tempData, newArray);
 
-              var compiled = Handlebars.compile(template);
-              console.log("compiled---------------",compiled);
+}
 
-              var target = "container";
-              console.log("target---------",target);
+// LOAD -------INVOKE init()-----------------------------------------------
+document.addEventListener("load", init());
 
-              var loc_template = document.getElementById("loc_template").innerHTML;
-              var loc_compiled = Handlebars.compile(loc_template);
-              var loc_target = "location";
-              var locationHTML = loc_compiled(data);
-              console.log("loc_data", data);
-              document.getElementById(loc_target).innerHTML = locationHTML;
+// MAIN FUNCTION ---------------------------------------------------
+function init(){
+
+  const btn = document.getElementById('btn');
+
+  showSpinner();
+  getWeatherForecastByIp()
+    .then(setWeatherData) // can also write .then(data => setWeatherData(data))
+    .catch(console.log)
+    .then(hideSpinner)
+    .catch(console.log)
+    .then(highlightCurrentDay)
+    .catch(console.log)
+    .finally(setIntervalforIP);
 
 
-             for (var i = 0; i < 3; i++) {
+  btn.addEventListener("click",function (){
+    console.log("Click Button------------------------");
+    const input = document.getElementById('input');
 
-               var datas = forecast_day[i];
-               datas.dayname = moment(datas.date).format('dddd');
-               datas.date = moment(datas.date, "YYYY-MM-DD").format('DD-MMMM-YYYY');
-               var elementHTML = compiled(datas);
+    cleanDOMcontainer();
 
-             // var compiled = Handlebars.compile(template);
-               console.log("elementHTML--------------------",elementHTML);
-               console.log("locationHTML--------------------",locationHTML);
-               console.log("datas----------------------------",datas );
+     getWeatherForecastByInput(input.value)
+      .then(setWeatherData)
+      .catch(console.log)
+      .then(highlightCurrentDay)
+      .catch(console.log)
+      .finally(setIntervalforInput(input.value));
 
-               // document.getElementById('location').innerHTML = "<h2>" + location + "</h2>";
-               document.getElementById(target).innerHTML += elementHTML;
-             }
-           }
-           else if (xmlhttp.status == 400) {
-              alert('There was an error 400');
-           }
-        }
-    };
-    xmlhttp.open("GET", 'http://api.weatherapi.com/v1/forecast.json?key=59723a46f32442b5886110030200308&q='+input_val+'&days=3', true);
-    console.log(xmlhttp);
-    xmlhttp.send();
-    // var prova = setTimeout(function(){
-    //
-    //   getWeatherForecast(input_val),3000);
+    cleanInputValue();
+  });
 }

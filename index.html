@@ -21,15 +21,24 @@
     <!-- Handlebars Template -->
 
     <script id="loc_template" type="text/x-handlebars-template">
-      <h2 class="luogo">{{location.name}} -- {{location.region}} -- {{location.country}} -- {{currentdate}}</h2>
+      <h2>{{location.name}}</h2>
+      <div class ="local_info">
+        <h3>{{location.region}}</h3>
+        <h3>({{location.country}})</h3>
+        <h4> {{currentdate}}</h4>
+      </div>
     </script>
 
     <script id="template" type="text/x-handlebars-template">
-      <div class="forecast">
-        <div class="date">{{{dayname}}}</div>
-        <div class="date">{{{date}}}</div>
-        <div class="info">{{{day.condition.text}}}</div>
-        <img class="img" src="http:{{{day.condition.icon}}}" alt="{{{icon}}}">
+      <div class="forecast_card">
+        <img class="forecast_card_img" src="http:{{{day.condition.icon}}}" alt="{{{icon}}}">
+        <div class ="forecast_card_data">
+          <h3 class="dayname">{{{dayname}}}</h3>
+          <div class="date_d">{{{date}}}</div>
+          <div class="max_temp"><em>Max Temp:{{{day.maxtemp_c}}}&#8451;</em></div>
+          <div class="min_temp"><em>Min Temp:{{{day.mintemp_c}}}&#8451;</em></div>
+          <div class="condition_text_d">{{{day.condition.text}}}</div>
+        </div>
       </div>
     </script>
 
@@ -40,8 +49,8 @@
 
   <body>
     <div class="wrapper">
-      <header class="centered">
-        <h1>Weather Forecast</h1>
+      <header id="header" class="centered">
+        <h1>3days Weather Forecast</h1>
         <div class="userInput">
           <input id="input" type="text" name="" placeholder="Search your city"  translate="yes" value="">
           <button id="btn" type="button" name="button">Search</button>
@@ -49,14 +58,13 @@
 
       </header>
 
-      <main class="centered">
+      <main id="main" class="centered">
         <div id="spinner"></div>
-        <div id="log"></div>
         <div id="location"></div>
         <div id="container" class="forecast_overflow_container">
         </div>
       </main>
     </div>
-    <script type="text/javascript" src="js/newscript.js"></script>
+    <script type="text/javascript" src="js/script.js"></script>
   </body>
 </html>
